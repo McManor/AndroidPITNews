@@ -52,7 +52,14 @@ public class MainActivity extends Activity {
                         baos.write(buffer, 0, count);
                     }
 
-                    textView.setText(new String(baos.toByteArray(), "UTF-8"));
+                    final String rssFeed = new String(baos.toByteArray(), "UTF-8");
+                    runOnUiThread(
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    textView.setText(rssFeed);
+                                }
+                            });
 
                 } catch (MalformedURLException e) {
                     e.printStackTrace();
