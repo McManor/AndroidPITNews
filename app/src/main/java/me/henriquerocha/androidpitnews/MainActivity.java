@@ -34,8 +34,9 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        final TextView textView = new TextView(this);
-        setContentView(textView);
+        setContentView(R.layout.activity_main);
+
+        final TextView textView = (TextView) findViewById(R.id.rss_feed);
 
         new Thread() {
             @Override
