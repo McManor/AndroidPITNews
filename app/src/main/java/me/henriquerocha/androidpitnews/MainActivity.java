@@ -17,7 +17,46 @@
 package me.henriquerocha.androidpitnews;
 
 import android.app.Activity;
+import android.os.Bundle;
+import android.widget.TextView;
+
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 public class MainActivity extends Activity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        TextView textView = new TextView(this);
+        setContentView(textView);
+
+        URL url;
+        HttpURLConnection urlConnection = null;
+        try {
+            url = new URL("http://www.androidpit.com/feed/main.xml");
+            urlConnection = (HttpURLConnection) url.openConnection();
+            InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            for (int count; (count = in.read(buffer)) != -1; ) {
+                baos.write(buffer, 0, count);
+            }
+            textView.setText(new String(baos.toByteArray(), "UTF-8"));
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (urlConnection != null) {
+                urlConnection.disconnect();
+            }
+        }
+    }
 
 }
