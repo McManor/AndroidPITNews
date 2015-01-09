@@ -20,13 +20,11 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.widget.TextView;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
+
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 
 public class MainActivity extends Activity {
 
@@ -41,19 +39,15 @@ public class MainActivity extends Activity {
         new Thread() {
             @Override
             public void run() {
-                URL url;
-                HttpURLConnection urlConnection = null;
                 try {
-                    url = new URL("http://www.androidpit.com/feed/main.xml");
-                    urlConnection = (HttpURLConnection) url.openConnection();
-                    InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    byte[] buffer = new byte[1024];
-                    for (int count; (count = in.read(buffer)) != -1; ) {
-                        baos.write(buffer, 0, count);
-                    }
+                    Request request = new Request.Builder()
+                            .url("http://www.androidpit.com/feed/main.xml")
+                            .build();
 
-                    final String rssFeed = new String(baos.toByteArray(), "UTF-8");
+                    OkHttpClient client = new OkHttpClient();
+                    Response response = client.newCall(request).execute();
+                    final String rssFeed = response.body().string();
+
                     runOnUiThread(
                             new Runnable() {
                                 @Override
@@ -61,15 +55,8 @@ public class MainActivity extends Activity {
                                     textView.setText(rssFeed);
                                 }
                             });
-
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
                 } catch (IOException e) {
                     e.printStackTrace();
-                } finally {
-                    if (urlConnection != null) {
-                        urlConnection.disconnect();
-                    }
                 }
             }
         }.start();
