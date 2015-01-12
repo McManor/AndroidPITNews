@@ -19,16 +19,16 @@ package me.henriquerocha.androidpitnews;
 import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.widget.TextView;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class MainActivity extends Activity {
-
-    private TextView rssFeedTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,9 +36,20 @@ public class MainActivity extends Activity {
 
         setContentView(R.layout.activity_main);
 
-        rssFeedTextView = (TextView) findViewById(R.id.rss_feed);
+        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
 
-        new GetFeedTask().execute();
+        // Use this setting to improve performance if you know that changes
+        // in content do not change the layout size of the RecyclerView.
+        recyclerView.setHasFixedSize(true);
+
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        ArrayList<String> items = new ArrayList<>();
+        for (int i = 0; i < 20; i++) {
+            items.add("Article " + i);
+        }
+
+        recyclerView.setAdapter(new RssFeedAdapter(items));
     }
 
     private class GetFeedTask extends AsyncTask<Void, Void, String> {
@@ -60,9 +71,6 @@ public class MainActivity extends Activity {
 
         @Override
         protected void onPostExecute(String s) {
-            if (s != null) {
-                rssFeedTextView.setText(s);
-            }
         }
     }
 }
