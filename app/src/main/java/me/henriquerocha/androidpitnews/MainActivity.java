@@ -19,16 +19,25 @@ package me.henriquerocha.androidpitnews;
 import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
+
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements AdapterView.OnItemClickListener {
+
+    private List<AndroidPitRssParser.Item> items = new ArrayList<>();
+    private ArrayAdapter<AndroidPitRssParser.Item> adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,32 +45,37 @@ public class MainActivity extends Activity {
 
         setContentView(R.layout.activity_main);
 
-        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+        adapter = new ArrayAdapter<>(this, R.layout.rss_feed_item, items);
 
-        // Use this setting to improve performance if you know that changes
-        // in content do not change the layout size of the RecyclerView.
-        recyclerView.setHasFixedSize(true);
+        ListView listView = (ListView) findViewById(R.id.feed_listview);
+        listView.setOnItemClickListener(this);
+        listView.setAdapter(adapter);
 
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-        ArrayList<String> items = new ArrayList<>();
-        for (int i = 0; i < 20; i++) {
-            items.add("Article " + i);
-        }
-
-        recyclerView.setAdapter(new RssFeedAdapter(items));
+        new GetFeedTask().execute();
     }
 
-    private class GetFeedTask extends AsyncTask<Void, Void, String> {
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        startActivity(ItemDetailActivity.getStartIntent(this, adapter.getItem(position)));
+    }
+
+    private class GetFeedTask extends AsyncTask<Void, Void, List<AndroidPitRssParser.Item>> {
 
         @Override
-        protected String doInBackground(Void... params) {
+        protected List<AndroidPitRssParser.Item> doInBackground(Void... params) {
             try {
                 Request request = new Request.Builder()
                         .url("http://www.androidpit.com/feed/main.xml")
                         .build();
 
-                return new OkHttpClient().newCall(request).execute().body().string();
+                Response response = new OkHttpClient().newCall(request).execute();
+                List<AndroidPitRssParser.Item> items = null;
+                try {
+                    items = new AndroidPitRssParser().parse(response.body().byteStream());
+                } catch (XmlPullParserException e) {
+                    e.printStackTrace();
+                }
+                return items;
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -70,7 +84,11 @@ public class MainActivity extends Activity {
         }
 
         @Override
-        protected void onPostExecute(String s) {
+        protected void onPostExecute(List<AndroidPitRssParser.Item> items) {
+            if (items != null) {
+                adapter.clear();
+                adapter.addAll(items);
+            }
         }
     }
 }
